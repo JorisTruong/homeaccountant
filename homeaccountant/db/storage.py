@@ -110,8 +110,24 @@ class Storage:
             user_uid=user_uid
         )
 
-    async def get_accounts(self, user):
-        raise NotImplementedError
+    async def get_accounts(self, user_uid):
+        async with self._engine.acquire() as conn:
+            resp = await conn.execute(AccountSQL.select().where(AccountSQL.c['user_uid'] == user_uid))
+            try:
+                r = await resp.fetchall()
+                if len(r) > 0:
+                    return [Account(**{
+                        'uid': x[0],
+                        'name': x[1],
+                        'balance': x[2],
+                        'acronym': x[3],
+                        'user': str(x[4])
+                    }) for x in r]
+                else:
+                    return None
+            except TypeError:
+                return None
+        
 
     async def get_transaction_family_from_uid(self, transaction_family_uid):
         return await get_object_from(
@@ -120,7 +136,8 @@ class Storage:
             dataclass=TransactionFamily,
             accessors=["uid"],
             values=[transaction_family_uid],
-            with_user_uid=False
+            with_user_uid=False,
+            user_uid=None
         )
     
     async def add_transaction_category(self, transaction_category):
@@ -136,7 +153,8 @@ class Storage:
             dataclass=TransactionCategory,
             accessors=["uid"],
             values=[transaction_category_uid],
-            with_user_uid=False
+            with_user_uid=False,
+            user_uid=None
         )
 
     async def get_transaction_category_from_name(self, name, transaction_family_uid):
@@ -146,7 +164,8 @@ class Storage:
             dataclass=TransactionCategory,
             accessors=["name", "transaction_family_uid"],
             values=[name, transaction_family_uid],
-            with_user_uid=False
+            with_user_uid=False,
+            user_uid=None
         )
 
     async def close(self):

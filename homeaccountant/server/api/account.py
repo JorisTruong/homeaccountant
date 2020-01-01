@@ -41,18 +41,46 @@ async def getAccount(request):
                     'name': account.name,
                     'balance': account.balance,
                     'acronym': account.acronym,
-                    'user': str(account.user)
+                    'user_uid': account.user
                 })
         except ValueError:
             raise
         raise web.HTTPOk
+    except web.HTTPError:
+        raise
     except Exception:
         raise
     
 
 @account_routes.get('/accounts')
 async def getAccounts(request):
-    raise NotImplementedError
+    try:
+        await request.text()
+        user_uid = request['user_uid']
+        try:
+            accounts = await request.app.storage.get_accounts(user_uid)
+            if accounts and len(accounts) > 0:
+                response = []
+                for account in accounts:
+                    response.append({
+                        'uid': account.uid,
+                        'name': account.name,
+                        'balance': account.balance,
+                        'acronym': account.acronym,
+                        'user_uid': account.user
+                    })
+                return web.json_response(data={
+                    'accounts': response
+                })
+        except ValueError as e:
+            logger.exception(e)
+            raise
+        raise web.HTTPOk
+    except web.HTTPError:
+        raise
+    except Exception as e:
+        logger.exception(e)
+        raise
 
 
 #####################

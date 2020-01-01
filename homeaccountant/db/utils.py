@@ -11,11 +11,11 @@ class User:
 
 @dataclass
 class Account:
-    name: str
-    balance: int
-    acronym: str
-    user: User = None
     uid: int = None
+    name: str = None
+    balance: int = None
+    acronym: str = None
+    user: User = None
 
 @dataclass
 class TransactionFamily:
